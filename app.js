@@ -24,7 +24,6 @@ const planeGeometry = new THREE.PlaneGeometry(1000, 1000);
 const planeMaterial = new THREE.MeshLambertMaterial({ color: 0x228B22 }); // Grass color
 const plane = new THREE.Mesh(planeGeometry, planeMaterial);
 plane.rotation.x = - Math.PI / 2;
-plane.position.y = -1;
 scene.add(plane);
 
 // Add more and larger buildings, avoiding the path

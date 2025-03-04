@@ -24,15 +24,23 @@ const planeGeometry = new THREE.PlaneGeometry(1000, 1000);
 const planeMaterial = new THREE.MeshLambertMaterial({ color: 0x228B22 }); // Grass color
 const plane = new THREE.Mesh(planeGeometry, planeMaterial);
 plane.rotation.x = - Math.PI / 2;
+plane.position.y = -1;
 scene.add(plane);
 
-// Add buildings
-const buildingGeometry = new THREE.BoxGeometry(20, 100, 20); // Larger buildings
+// Add more and larger buildings, avoiding the path
+const buildingGeometry = new THREE.BoxGeometry(80, 400, 80); // Increase thickness and height for epic scale
 const buildingMaterial = new THREE.MeshLambertMaterial({ color: 0x8B8B8B }); // Building color
-for (let i = 0; i < 50; i++) { // More buildings
-    const building = new THREE.Mesh(buildingGeometry, buildingMaterial);
-    building.position.set(Math.random() * 800 - 400, 50, Math.random() * 800 - 400);
-    scene.add(building);
+for (let i = 0; i < 300; i++) { // Increase the number of buildings
+    const x = Math.random() * 800 - 400;
+    const z = Math.random() * 800 - 400;
+    // Define a clear corridor along the z-axis where no buildings should be placed
+    const pathWidth = 50; // Width of the path along the x-axis
+    if (Math.abs(x) > pathWidth) {
+        // Ensure buildings are not placed within the path corridor
+        const building = new THREE.Mesh(buildingGeometry, buildingMaterial);
+        building.position.set(x, 200, z); // Adjust y-position for taller buildings
+        scene.add(building);
+    }
 }
 
 // Add ambient light
@@ -44,7 +52,7 @@ const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
 directionalLight.position.set(1, 1, 1).normalize();
 scene.add(directionalLight);
 
-// Adjust camera position to be slightly higher
+// Set the initial camera position
 camera.position.set(0, 10, 0);
 
 // Add OrbitControls
@@ -52,12 +60,11 @@ const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableRotate = true;
 controls.enableZoom = false;
 controls.enablePan = false;
-controls.enableDamping = true;
-controls.dampingFactor = 0.05;
+controls.enableDamping = false;
 controls.update();
 
-// Set camera to look at the horizon
-controls.target.set(0, 10, -1);
+// Verify camera target configuration
+controls.target.set(camera.position.x, camera.position.y, camera.position.z - 1);
 controls.update();
 
 // Ensure the renderer's DOM element captures mouse events
@@ -67,13 +74,32 @@ document.body.style.overflow = 'hidden';
 // Lock the camera's up vector
 camera.up.set(0, 1, 0);
 
-// Limit vertical rotation
-controls.maxPolarAngle = Math.PI / 2;
-controls.minPolarAngle = Math.PI / 4;
+// Allow full rotation by removing polar angle limits
+controls.maxPolarAngle = Math.PI;
+controls.minPolarAngle = 0;
+
+// Allow unrestricted azimuthal angles for full rotation
+controls.minAzimuthAngle = -Infinity;
+controls.maxAzimuthAngle = Infinity;
+
+// Reintroduce train movement logic
+let trainPosition = 0;
+const trainSpeed = 0.5;
+
+function updateCameraPosition() {
+    trainPosition -= trainSpeed; // Decrement to move in the opposite direction
+    // Update only the camera's z-position
+    camera.position.z = trainPosition;
+    // Update controls target to follow the camera's z position
+    controls.target.z = camera.position.z - 1;
+}
 
 // Animation loop
 function animate() {
     requestAnimationFrame(animate);
+
+    // Update camera position to simulate train movement
+    updateCameraPosition();
 
     // Update controls
     controls.update();
